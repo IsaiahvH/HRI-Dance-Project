@@ -1,6 +1,10 @@
 
 # Requires SpeechRecognition and PyAudio
 # https://pypi.org/project/SpeechRecognition/
+# Install with pip by:
+# pip install SpeechRecognition
+# pip install pipwin
+# pipwin install pyaudio
 
 import time
 import speech_recognition as sr

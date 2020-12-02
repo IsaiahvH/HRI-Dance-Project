@@ -1,11 +1,14 @@
-"""PyAudio example: Record a few seconds of audio and save to a WAVE file."""
+"""PyAudio example: Record a few seconds of audio and save to a WAVE file.
+Confirmed to work on Windows.
+Change CHANNELS if you get Errno -9998.
+"""
 
 import pyaudio
 import wave
 
 CHUNK = 1024
 FORMAT = pyaudio.paInt16
-CHANNELS = 2
+CHANNELS = 1  # or 2 if you have a stereo microphone.
 RATE = 44100
 RECORD_SECONDS = 5
 WAVE_OUTPUT_FILENAME = "output.wav"
