@@ -1,22 +1,29 @@
+# Requires pvporcupine and pyaudio
+# pip install pvporcupine
+# pipwin install pyaudio
+
 import pvporcupine
 import pyaudio
 import struct
 
+# First draft to recognise a small set of keywords
 
 porcupine = None
 pa = None
-audio_stream = None
-print(pvporcupine.KEYWORDS)
+audioStream = None
+
+# Match keywords with files
 keywords = ["Do a wave", "Finger Guns", "Play guitar"]
-patharray = ["C:/Users/lizzy/PycharmProjects/HRI/do_a_wave.ppn","C:/Users/lizzy/PycharmProjects/HRI/finger_guns.ppn","C:/Users/lizzy/PycharmProjects/HRI/play_guitar_windows_1_2_2021_v1.9.0.ppn"]
+keywordPaths = ["./TrainedKeywords/do_a_wave.ppn","./TrainedKeywords/finger_guns.ppn","./TrainedKeywords/play_guitar.ppn"]
+
 try:
-    porcupine = pvporcupine.create(keyword_paths=patharray)  # ['blueberry', 'computer', "alexa"])
+    porcupine = pvporcupine.create(keyword_paths = keywordPaths)
     pa = pyaudio.PyAudio()
     audio_stream = pa.open(
-        rate=porcupine.sample_rate,
-        channels=1,
-        format=pyaudio.paInt16,
-        input=True,
+        rate = porcupine.sample_rate,
+        channels = 1,
+        format = pyaudio.paInt16,
+        input = True,
         frames_per_buffer=porcupine.frame_length)
 
     while True:
