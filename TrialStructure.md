@@ -13,13 +13,13 @@ Alternative approaches and parameters to be evaluated are indicated in **bold**.
 1. Questionnaire
 1. End, thank you
 
-Each section is announced, that is, it is clear to the participant that the previous section has ended.
+Each section is announced, that is, it is clear to the participant that the previous section has ended.\
 **Alternative:** Blocks split and intertwined, e.g. interface 1, interface 2, interface 1, interface 2, etc.
 
 ## Block overview
 Block interface type is balanced over the total amount of participants, that is, even participant numbers start with the Gestural block, followed by the Speech block, vice versa for the odd participant numbers.
 
-A block consists out of **10** trials. After each trial, a short pause (inter-trial-interval) is introduced of **5** seconds.
+A block consists out of **10** trials. After each trial, a short pause (inter-trial-interval) is introduced of **5** seconds.\
 **Alternative:** if the number of trials is increased, a longer pause could be introduced after every **5** trials.
 
 ## Trial overview
@@ -27,8 +27,8 @@ A trial has an associated dance move sequence consisting of 4 dance moves, rando
 A dance move instruction is visually communicated by displaying an image of the associated pose, captioned with the associated keyword.
 
 ### Instruction display
-**Alternative 1:** Display instructions before the intended execution time, one at a time. This would exclude any memory task involvement.
-**Alternative 2:** Always display a fixed row of all 6 possible dance instructions. Indicate per trial the currently active instructions by adding their order (e.g. "1", "2", etc.) underneath.
+**Alternative 1:** Display instructions before the intended execution time, one at a time. This would exclude any memory task involvement.\
+**Alternative 2:** Always display a fixed row of all 6 possible dance instructions. Indicate per trial the currently active instructions by adding their order (e.g. "1", "2", etc.) underneath.\
 **Alternative 3:** Indicate per trial the currently active instructions by displaying them left to right in order.
 
 ### Instruction timing
