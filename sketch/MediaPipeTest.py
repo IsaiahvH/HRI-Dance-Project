@@ -16,15 +16,15 @@ while cap.isOpened():
     if not success:
         break
 
-    # Flip the image horizontally for a later selfie-view display, and convert
-    # the BGR image to RGB.
+    # Flip the _image horizontally for a later selfie-view display, and convert
+    # the BGR _image to RGB.
     image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-    # To improve performance, optionally mark the image as not writeable to
+    # To improve performance, optionally mark the _image as not writeable to
     # pass by reference.
     image.flags.writeable = False
     results = pose.process(image)
 
-    # Draw the pose annotation on the image.
+    # Draw the pose annotation on the _image.
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
     # print(results.pose_landmarks)  # This is all the landmarks
