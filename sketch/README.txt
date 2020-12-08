@@ -19,6 +19,8 @@ MediaPipeTest:
 - Tips for classifying poses: https://developers.google.com/ml-kit/vision/pose-detection/classifying-poses
 
 PoseRecorder:
-- STILL WIP ++++ DON'T USE IT YET.
 - Built around the same code as MediaPipeTest.
 - Used for storing poses.
+- Instuctions can be found at the top of the script.
+- See PoseRecorderExample.jpg for how to sit (i.e. legs and head).
+- Installation instructions the same as for MediaPipeTest.
