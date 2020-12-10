@@ -52,7 +52,7 @@ _messages = {
 
 # Label for negative samples:
 _negative_label = "No pose"
-_current_pose = [_negative_label]
+_current_pose = [None]
 
 
 def pose_logging():
@@ -76,7 +76,7 @@ def pose_logging():
                     _current_pose[0] = pose
                     _messages[stage] = "Hold pose: " + str(pose)
             elif stage == 10:  # Reset the pose label
-                _current_pose[0] = _negative_label
+                _current_pose[0] = None
             _k_dic['m'] = stage
             time.sleep(sleep_time)  # Wait before next stage
 
@@ -151,7 +151,7 @@ while cap.isOpened():
     cv2.imshow('MediaPipe Pose', image)
 
     # Add the keypoints to the dataframe if a pose is active:
-    if _current_pose[0] != _negative_label:
+    if _current_pose[0]:
         new_row = {"Label": _current_pose[0]}
         for key_i, point in enumerate(results.pose_landmarks.landmark):
             key_i_x = str(key_i) + "_x"
