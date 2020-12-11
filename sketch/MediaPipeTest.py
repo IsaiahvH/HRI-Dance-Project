@@ -4,8 +4,15 @@
 
 import cv2
 import mediapipe as mp
+from joblib import load
+
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
+
+# Import the SVM and labels:
+clf = load('Scaling_SVM.joblib')
+labels = ['Disco', 'Hips', 'Box', 'Roof', 'Kiss', 'Guitar', 'Clap', 'No pose']
+print(clf)
 
 # For webcam input:
 pose = mp_pose.Pose(
@@ -18,7 +25,7 @@ while cap.isOpened():
 
     # Flip the image horizontally for a later selfie-view display, and convert
     # the BGR image to RGB.
-    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     # To improve performance, optionally mark the image as not writeable to
     # pass by reference.
     image.flags.writeable = False
@@ -27,8 +34,16 @@ while cap.isOpened():
     # Draw the pose annotation on the image.
     image.flags.writeable = True
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    # print(results.pose_landmarks)  # This is all the landmarks
-    print(results.pose_landmarks.landmark[11])  # This is a specific one
+
+    # Predict the pose:
+    key_points = []
+    for key_point in results.pose_landmarks.landmark:
+        key_points.append(key_point.x)
+        key_points.append(key_point.y)
+        key_points.append(key_point.visibility)
+    prediction = clf.predict([key_points])[0]
+    print(labels[prediction])
+
     mp_drawing.draw_landmarks(
         image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
     cv2.imshow('MediaPipe Pose', image)
