@@ -1,0 +1,14 @@
+1. Download OpenSesame from here: https://osdoc.cogsci.nl/
+2. When installed open the opensesame file from the experiment folder
+3. Rename the folder in setup to the folder where you python code is
+4. Test if PyAudio is installed by typing "import pyaudio" in the console
+5. If no pyaudio errors nice. Continue at step 12
+6. Else: 
+7. Go to the the Folder of OpenSesame (probably in your program files). Go to the share folder
+8. Create 2 folders. One named "PyAudio" and one "PortAudio"
+9. Look for a file named pyaudio.py on your pc and copy this file to the PyAudio folder you just created
+10. Do the same for portaudio but copy it to the PortAudio folder. For me the file was named this "_portaudio.cp37-win_amd64"
+11. Test if PyAudio works by typing "import pyaudio" into the OpenSesame console 
+12. Try running it with the blue arrows 
+13. If pvporcupine is not installed go to the opensesame console and type !pip install pvporcupine
+14. It should work now, if not, call/whatsapp me (Lizzy)
