@@ -8,7 +8,7 @@ After following the steps below, take a look through the code and that inside th
 ----
 
 ## Version 2
-1. Download OpenSesame from here: https://osdoc.cogsci.nl/
+1. Download OpenSesame from here: https://osdoc.cogsci.nl/3.3/download/#windows notice, please download the megapack
 1. When installed open the opensesame file from the experiment folder
 1. Type !pip install pvporcupine in its console
 1. Try running it with the blue arrows button at the top
