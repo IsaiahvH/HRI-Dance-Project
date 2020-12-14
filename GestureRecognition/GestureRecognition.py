@@ -1,5 +1,7 @@
 # Last update: 2020-12-10
 # Imports:
+import glob  # To loop through files
+import os  # To find the current working directory
 import pandas as pd  # For DataFrame
 import numpy as np  # For its arrays
 from sklearn import svm, metrics  # To train a simple SVM for testing
@@ -8,8 +10,13 @@ from sklearn.preprocessing import StandardScaler
 from joblib import dump
 
 # Read in data and convert labels to vector:
-df = pd.read_csv(r"TrainingData/TestResults_Emma2.txt", index_col=0)
+path = os.path.join(os.getcwd(), "TrainingData")
+all_files = glob.glob(os.path.join(path, "*.txt"))
+df = pd.concat((pd.read_csv(f, index_col=0) for f in all_files))
+df.reset_index(drop=True, inplace=True)
+# df = pd.read_csv(r"TrainingData/TestResults_Emma2.txt", index_col=0)
 print(df.head())
+print("Input data shape:", df.shape)
 
 # Extract all labels:
 labels = df['Label'].unique()
@@ -44,8 +51,8 @@ X_train = train.loc[:, "0_x":"24_y"].to_numpy()
 y_test = test.label_int.to_numpy()
 X_test = test.loc[:, "0_x":"24_y"].to_numpy()
 
-clf = make_pipeline(StandardScaler(), svm.SVC())
-# clf = svm.SVC()
+# clf = make_pipeline(StandardScaler(), svm.SVC())
+clf = svm.SVC()
 clf.fit(X_train, y_train)
 
 predictions = clf.predict(X_test)
@@ -56,4 +63,4 @@ print(accuracy)
 print(labels)
 
 # Save the SVM:
-dump(clf, 'SVM.joblib')
+dump(clf, 'SVM_multiple.joblib')

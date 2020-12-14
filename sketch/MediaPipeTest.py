@@ -10,7 +10,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
 
 # Import the SVM and labels:
-clf = load('Scaling_SVM.joblib')
+clf = load('SVM_multiple.joblib')
 labels = ['Disco', 'Hips', 'Box', 'Roof', 'Kiss', 'Guitar', 'Clap', 'No pose']
 print(clf)
 
