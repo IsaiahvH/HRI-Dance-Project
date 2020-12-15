@@ -1,18 +1,16 @@
-# Source: https://google.github.io/mediapipe/solutions/pose
-# File by: Emma Vriezen
-# See README for comments.
+# Last update: 2020-12-15
+# Imports:
+import numpy as np  # For its arrays
+from joblib import load  # To load the classifier
+import cv2  # For displaying the webcam feed and the pose keypoints
+import mediapipe as mp  # Detects the keypoints on a body
 
-import cv2
-import mediapipe as mp
-from joblib import load
+# Import the classifier and make a list of the labels:
+clf = load('SVM_six_gestures.joblib')
+labels = ['Disco', 'Hips', 'Box', 'Roof', 'Guitar', 'Clap', 'No pose']
 
 mp_drawing = mp.solutions.drawing_utils
 mp_pose = mp.solutions.pose
-
-# Import the SVM and labels:
-clf = load('SVM_multiple.joblib')
-labels = ['Disco', 'Hips', 'Box', 'Roof', 'Kiss', 'Guitar', 'Clap', 'No pose']
-print(clf)
 
 # For webcam input:
 pose = mp_pose.Pose(
@@ -40,8 +38,9 @@ while cap.isOpened():
     for key_point in results.pose_landmarks.landmark:
         key_points.append(key_point.x)
         key_points.append(key_point.y)
-        key_points.append(key_point.visibility)
-    prediction = clf.predict([key_points])[0]
+        # key_points.append(key_point.visibility)
+    key_points = np.array(key_points).reshape(1, -1)
+    prediction = clf.predict(key_points)[0]
     print(labels[prediction])
 
     mp_drawing.draw_landmarks(
