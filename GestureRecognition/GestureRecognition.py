@@ -48,7 +48,7 @@ test = df[~msk]
 
 # Confirm the split:
 print("Total nr. of samples:", len(df))
-print("Training sampels:", len(train))
+print("Training samples:", len(train))
 print("Testing samples:", len(test))
 
 # Test a simple SVM:
@@ -69,4 +69,4 @@ print(accuracy)
 print(labels)
 
 # Save the SVM:
-dump(clf, 'SVM_six_gestures.joblib')
+dump(clf, 'SVM_final.joblib')

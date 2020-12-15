@@ -6,7 +6,7 @@ import cv2  # For displaying the webcam feed and the pose keypoints
 import mediapipe as mp  # Detects the keypoints on a body
 
 # Import the classifier and make a list of the labels:
-clf = load('SVM_six_gestures.joblib')
+clf = load('SVM_final.joblib')
 labels = ['Disco', 'Hips', 'Box', 'Roof', 'Guitar', 'Clap', 'No pose']
 
 mp_drawing = mp.solutions.drawing_utils
