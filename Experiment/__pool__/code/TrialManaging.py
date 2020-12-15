@@ -36,15 +36,26 @@ class UIManager:
 
 		# Video
 		self.VID_y = -340
+		self.VID_height = 440
+		self.VID_width = 670
+		self.VID_duration = 4
+
+		# Ear
+		self.EAR_xOffset = 70
+		self.EAR_fontSize = 100
 
 	def show(self):
 		self.trialCanvas.show()
 
 	def drawVideo(self):
 		# TODO: Change to actual video
-		width = 670
-		height = 440
-		self.trialCanvas["naoVideo"] = self.OSH.Rect(x = -width/2, y = self.VID_y, w = width, h = height, fill = True, color = 'gray')
+		self.trialCanvas["naoVideo"] = self.OSH.Rect(x = -self.VID_width/2, y = self.VID_y, w = self.VID_width, h = self.VID_height, fill = True, color = 'gray')
+		self.trialCanvas["naoVideoDescription"]  = self.OSH.Text("Idle", x = 0, y = self.VID_y-40)
+
+	def updateVideo(self, orderIndex):
+		# TODO: Change to actual video
+		videoDescription = self.keywords[self.order[orderIndex]] if orderIndex is not None else "Idle"
+		self.trialCanvas["naoVideoDescription"].text = videoDescription
 
 	def drawPoseImages(self):
 		for i in range(len(self.keywords)):
@@ -60,11 +71,20 @@ class UIManager:
 		for i in range(len(self.order)):
 			self.trialCanvas[f"orderText{i}"] = self.OSH.Text(f"{i+1}", x = self.KW_xRange[self.order[i]], y = self.KW_y+self.KWO_yOffset, font_size = self.KWO_fontSize)
 
+	def drawListening(self):
+		self.trialCanvas["listeningIndication"] = self.OSH.Text("👂", x = self.VID_width/2+self.EAR_xOffset, y = self.VID_y+self.VID_height/2, font_size = self.EAR_fontSize)
+
 	def markCorrectKeyword(self, orderIndex):
 		self.trialCanvas[f"orderText{orderIndex}"].color = 'green'
 
 	def unmarkCorrectKeyword(self, orderIndex):
 		self.trialCanvas[f"orderText{orderIndex}"].color = 'black'
+
+	def markListening(self):
+		self.trialCanvas["listeningIndication"].visible = True
+
+	def markDeaf(self):
+		self.trialCanvas["listeningIndication"].visible = False
 
 	def presentITI(self):
 		for i in range(len(self.order)):
@@ -92,6 +112,7 @@ class TrialManager:
 		self.UIManager.drawKeywordOrder()
 		self.UIManager.drawPoseImages()
 		self.UIManager.drawVideo()
+		self.UIManager.drawListening()
 
 	def run(self, recognizer, timeout):
 		self.UIManager.show()
@@ -99,7 +120,11 @@ class TrialManager:
 
 		# Main loop
 		while self.progress != len(self.order): 
+			self.UIManager.markListening()
+			self.UIManager.show()
+
 			moveIndex = recognizer.listen(timeout = self.timePerKeywordRecognition)
+			self.UIManager.markDeaf()
 
 			if moveIndex is None:
 				print("No keyword detected, ending trial")
@@ -123,6 +148,7 @@ class TrialManager:
 
 	def processRecognisedMove(self, moveIndex):
 		print(f"Detected {self.keywords[moveIndex]}", end = '')
+
 		if moveIndex not in self.order:
 			print(", but not in current trial; ignoring")
 			return
@@ -132,6 +158,13 @@ class TrialManager:
 
 		print(", advancing progress")
 		self.progress += 1
+
 		transformedIndex = self.order.index(moveIndex)
 		self.UIManager.markCorrectKeyword(transformedIndex)
+		self.UIManager.updateVideo(orderIndex = transformedIndex)
+		self.UIManager.show()
+
+		# Halt until video completes
+		time.sleep(self.UIManager.VID_duration)
+		self.UIManager.updateVideo(orderIndex = None)
 		self.UIManager.show()
