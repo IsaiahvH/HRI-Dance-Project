@@ -9,27 +9,35 @@ import numpy as np
 class GestureRecognizer:
 
     def __init__(self):
-        print('The scikit-learn version is {}.'.format(sklearn.__version__))
         self.__engine = None
         self.__videoStream = None
         self.__clf = None
-        self.__trainedKeywordOrder = ["do the disco", "hands on hips", "give a box", "raise the roof", "air guitar", "clap your hands"]
+        self.__trainedKeywordOrder = ["do the disco",
+                                      "hands on hips",
+                                      "give a box",
+                                      "raise the roof",
+                                      "air guitar",
+                                      "clap your hands"]
         self.__keywords = None
 
     def startEngine(self, clf_path, keywords):
         """Start GR engine.
         - clf_path: path to gesture classifier.
-        - keywords: an array of strings; names of the gestures. Must be subset of self.__trainedKeywordOrder!
+        - keywords: an array of strings; names of the gestures.
+            Must be subset of self.__trainedKeywordOrder!
         """
         try:
             self.__clf = load(clf_path)
-            assert all(keyword in self.__trainedKeywordOrder for keyword in keywords), "Provided keywords must be subset of pretrained keyword list"
+            assert all(keyword in self.__trainedKeywordOrder for keyword in
+                       keywords), "Provided keywords must be subset " \
+                                  "of pretrained keyword list"
             self.__keywords = keywords
 
             self.__engine = mp.solutions.pose.Pose(
                 min_detection_confidence=0.5,
                 min_tracking_confidence=-0.5)
-            assert self.__openVideoStream(), "Could not open video stream in gesture recognition"
+            assert self.__openVideoStream(), "Could not open video stream " \
+                                             "in gesture recognition"
         except Exception as e:
             print("GestureRecognizer engine start encountered an exception", e)
             self.shutDownEngine()
@@ -44,7 +52,8 @@ class GestureRecognizer:
                     in which case those keywords will be reused.
         """
         if keywords is None:
-            assert self.__keywords is not None, "Cannot restart engine as no keywords provided and none stored in GestureRecognizer."
+            assert self.__keywords is not None, "Cannot restart engine as no" \
+                " keywords provided and none stored in GestureRecognizer."
             keywords = self.__keywords
 
         self.shutDownEngine()
@@ -113,9 +122,6 @@ class GestureRecognizer:
 
                 # Extract the key-points from the pose and predict:
                 key_points = []
-                # for key_point in results.pose_landmarks.landmark:
-                #     key_points.append(key_point.x)
-                #     key_points.append(key_point.y)
                 for i in range(25):
                     key_points.append(results.pose_landmarks.landmark[i].x)
                     key_points.append(results.pose_landmarks.landmark[i].y)
@@ -127,26 +133,14 @@ class GestureRecognizer:
                     predictions.clear()
                 elif prediction != 6:
                     predictions.append(prediction)
-                else:
-                    predictions.append(prediction)
 
-                # If the same pose is seen 15 frames in a row, stop and return transformed prediction:
+                # If the same pose is seen 15 frames in a row, stop
+                # and return transformed prediction:
                 if len(predictions) > 15:
-                    # return self.__keywords.index(self.__trainedKeywordOrder[prediction])
-                    return prediction
+                    return self.__keywords.index(
+                        self.__trainedKeywordOrder[prediction])
                 cv2.waitKey(33)  # 30 fps
             return None
-        finally:
-            print("Finally after trying")
-        # except Exception as e:
-        #     print("GestureRecognizer encountered an error while watching the"
-        #           " video stream for gestures", e)
-
-
-# gr = GestureRecognizer()
-# kw = ['Disco', 'Hips', 'Box', 'Roof', 'Guitar', 'Clap', 'No pose']
-# gr.startEngine(clf_path='SVM_final.joblib', keywords=kw)
-# for i in range(5):
-#     gr.recognize(timeout=60)
-# gr.restartEngine(clf_path='SVM_final.joblib')
-# gr.recognize(timeout=5)
+        except Exception as e:
+            print("GestureRecognizer encountered an error while watching the"
+                  " video stream for gestures", e)
