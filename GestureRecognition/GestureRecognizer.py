@@ -142,7 +142,7 @@ class GestureRecognizer:
             return None
         except Exception as e:
             print("GestureRecognizer encountered an error while watching the"
-                  "video stream for gestures", e)
+                  " video stream for gestures", e)
 
 
 # gr = GestureRecognizer()

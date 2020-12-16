@@ -1,5 +1,6 @@
 import time
 import cv2
+import sklearn
 from joblib import load
 import mediapipe as mp
 import numpy as np
@@ -8,6 +9,7 @@ import numpy as np
 class GestureRecognizer:
 
     def __init__(self):
+        print('The scikit-learn version is {}.'.format(sklearn.__version__))
         self.__engine = None
         self.__videoStream = None
         self.__clf = None
@@ -111,9 +113,12 @@ class GestureRecognizer:
 
                 # Extract the key-points from the pose and predict:
                 key_points = []
-                for key_point in results.pose_landmarks.landmark:
-                    key_points.append(key_point.x)
-                    key_points.append(key_point.y)
+                # for key_point in results.pose_landmarks.landmark:
+                #     key_points.append(key_point.x)
+                #     key_points.append(key_point.y)
+                for i in range(25):
+                    key_points.append(results.pose_landmarks.landmark[i].x)
+                    key_points.append(results.pose_landmarks.landmark[i].y)
 
                 key_points = np.array(key_points).reshape(1, -1)
                 prediction = self.__clf.predict(key_points)[0]
@@ -127,16 +132,20 @@ class GestureRecognizer:
 
                 # If the same pose is seen 15 frames in a row, stop and return transformed prediction:
                 if len(predictions) > 15:
-                    return self.__keywords.index(self.__trainedKeywordOrder[prediction])
+                    # return self.__keywords.index(self.__trainedKeywordOrder[prediction])
+                    return prediction
                 cv2.waitKey(33)  # 30 fps
             return None
-        except Exception as e:
-            print("GestureRecognizer encountered an error while watching the"
-                  "video stream for gestures", e)
+        finally:
+            print("Finally after trying")
+        # except Exception as e:
+        #     print("GestureRecognizer encountered an error while watching the"
+        #           " video stream for gestures", e)
 
 
 # gr = GestureRecognizer()
-# gr.startEngine(clf_path='SVM_final.joblib')
+# kw = ['Disco', 'Hips', 'Box', 'Roof', 'Guitar', 'Clap', 'No pose']
+# gr.startEngine(clf_path='SVM_final.joblib', keywords=kw)
 # for i in range(5):
 #     gr.recognize(timeout=60)
 # gr.restartEngine(clf_path='SVM_final.joblib')

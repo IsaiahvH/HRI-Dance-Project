@@ -4,8 +4,11 @@ import glob  # To loop through files
 import os  # To find the current working directory
 import pandas as pd  # For DataFrame
 import numpy as np  # For its arrays
+import sklearn
 from sklearn import svm, metrics  # To train a simple SVM for testing
 from joblib import dump
+
+print('The scikit-learn version is {}.'.format(sklearn.__version__))
 
 # Read in data and convert labels to vector:
 path = os.path.join(os.getcwd(), "TrainingData")
@@ -69,4 +72,4 @@ print(accuracy)
 print(labels)
 
 # Save the SVM:
-dump(clf, 'SVM_final.joblib')
+dump(clf, 'SVM_finalTEST.joblib')
