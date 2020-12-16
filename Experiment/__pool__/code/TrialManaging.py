@@ -71,8 +71,8 @@ class UIManager:
 		for i in range(len(self.order)):
 			self.trialCanvas[f"orderText{i}"] = self.OSH.Text(f"{i+1}", x = self.KW_xRange[self.order[i]], y = self.KW_y+self.KWO_yOffset, font_size = self.KWO_fontSize)
 
-	def drawListening(self):
-		self.trialCanvas["listeningIndication"] = self.OSH.Text("👂", x = self.VID_width/2+self.EAR_xOffset, y = self.VID_y+self.VID_height/2, font_size = self.EAR_fontSize)
+	def drawListening(self, symbol):
+		self.trialCanvas["listeningIndication"] = self.OSH.Text(symbol, x = self.VID_width/2+self.EAR_xOffset, y = self.VID_y+self.VID_height/2, font_size = self.EAR_fontSize)
 
 	def markCorrectKeyword(self, orderIndex):
 		self.trialCanvas[f"orderText{orderIndex}"].color = 'green'
@@ -102,19 +102,18 @@ class TrialManager:
 		self.UIManager = UIManager(self.order, self.keywords, OSH)
 
 		# --- TRIAL PARAMETERS --- #
-		self.timePerKeywordRecognition = 4 # seconds
 		self.ITI = 3 # seconds
 
 
-	def prepare(self):
+	def prepare(self, listeningSymbol):
 		# Draw keywords
 		self.UIManager.drawKeywords()
 		self.UIManager.drawKeywordOrder()
 		self.UIManager.drawPoseImages()
 		self.UIManager.drawVideo()
-		self.UIManager.drawListening()
+		self.UIManager.drawListening(listeningSymbol)
 
-	def run(self, recognizer, timeout):
+	def run(self, recognizer, timeoutPerCommand):
 		self.UIManager.show()
 		startTime = time.time()
 
@@ -123,7 +122,7 @@ class TrialManager:
 			self.UIManager.markListening()
 			self.UIManager.show()
 
-			moveIndex = recognizer.listen(timeout = self.timePerKeywordRecognition)
+			moveIndex = recognizer.recognize(timeout = timeoutPerCommand)
 			self.UIManager.markDeaf()
 
 			if moveIndex is None:

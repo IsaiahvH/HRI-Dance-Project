@@ -11,28 +11,23 @@ class GestureRecognizer:
         self.__engine = None
         self.__videoStream = None
         self.__clf = None
-        self.__keywords = ['Disco',
-                           'Hips',
-                           'Box',
-                           'Roof',
-                           'Guitar',
-                           'Clap',
-                           'No pose']
+        self.__trainedKeywordOrder = ["do the disco", "hands on hips", "give a box", "raise the roof", "air guitar", "clap your hands"]
+        self.__keywords = None
 
-    def startEngine(self, clf_path=None, keywords=None):
-        """Start VR engine.
+    def startEngine(self, clf_path, keywords):
+        """Start GR engine.
         - clf_path: path to gesture classifier.
-        - keywords: (Optional) an array of strings; names of the gestures.
+        - keywords: an array of strings; names of the gestures. Must be subset of self.__trainedKeywordOrder!
         """
         try:
             self.__clf = load(clf_path)
-            if keywords:
-                self.__keywords = keywords
+            assert all(keyword in self.__trainedKeywordOrder for keyword in keywords), "Provided keywords must be subset of pretrained keyword list"
+            self.__keywords = keywords
+
             self.__engine = mp.solutions.pose.Pose(
                 min_detection_confidence=0.5,
                 min_tracking_confidence=-0.5)
-            assert self.__openVideoStream(), "Could not open video stream in" \
-                " gesture recognition."
+            assert self.__openVideoStream(), "Could not open video stream in gesture recognition"
         except Exception as e:
             print("GestureRecognizer engine start encountered an exception", e)
             self.shutDownEngine()
@@ -47,8 +42,7 @@ class GestureRecognizer:
                     in which case those keywords will be reused.
         """
         if keywords is None:
-            assert self.__keywords is not None, "Cannot restart engine as no" \
-                " keywords provided and none stored in GestureRecognizer."
+            assert self.__keywords is not None, "Cannot restart engine as no keywords provided and none stored in GestureRecognizer."
             keywords = self.__keywords
 
         self.shutDownEngine()
@@ -67,7 +61,7 @@ class GestureRecognizer:
         print("GestureRecognizer engine shut down")
 
     def getEngineStatus(self):
-        """ Get VR engine status
+        """ Get GR engine status
         Returns: True if engine is running normally, False otherwise
         """
         return (self.__engine is not None) and (self.__videoStream is not None)
@@ -101,16 +95,13 @@ class GestureRecognizer:
                 None if the timeout expired before a keyword was detected.
         """
         assert self.getEngineStatus(), "Could not start listening because" \
-                                       " of invalid audio engine status"
-        # if not self.__openVideoStream():
-        #     return None
-
+                                       " of invalid video engine status"
         deadline = time.time() + timeout
 
         try:
             predictions = []
             while time.time() < deadline:
-                success, image = self.__videoStream.read()
+                _, image = self.__videoStream.read()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                 image.flags.writeable = False
                 results = self.__engine.process(image)
@@ -134,10 +125,9 @@ class GestureRecognizer:
                 else:
                     predictions.append(prediction)
 
-                # If the same pose is seen 15 frames in a row, stop:
+                # If the same pose is seen 15 frames in a row, stop and return transformed prediction:
                 if len(predictions) > 15:
-                    print(self.__keywords[prediction])
-                    return prediction
+                    return self.__keywords.index(self.__trainedKeywordOrder[prediction])
                 cv2.waitKey(33)  # 30 fps
             return None
         except Exception as e:
