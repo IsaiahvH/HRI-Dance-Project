@@ -8,10 +8,11 @@ import numpy as np
 
 class GestureRecognizer:
 
-    def __init__(self):
+    def __init__(self, flip_image = False):
         self.__engine = None
         self.__videoStream = None
         self.__clf = None
+        self.__flip_image = flip_image
         self.__trainedKeywordOrder = ["do the disco",
                                       "hands on hips",
                                       "give a box",
@@ -114,6 +115,8 @@ class GestureRecognizer:
             while time.time() < deadline:
                 _, image = self.__videoStream.read()
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                if self.__flip_image:
+                    image = cv2.flip(image, 1)
                 image.flags.writeable = False
                 results = self.__engine.process(image)
 
