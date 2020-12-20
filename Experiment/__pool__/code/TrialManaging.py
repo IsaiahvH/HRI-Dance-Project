@@ -1,129 +1,156 @@
 import time
 import numpy as np
-
-# --- Holder for OpenSesame classes --- #
-class OSHolder:
-	def __init__(self, Canvas, Text, Image, Rect, baseFolder):
-		self.Canvas = Canvas
-		self.Text = Text
-		self.Image = Image
-		self.Rect = Rect
-		self.baseFolder = baseFolder
+import pygame as pyg
 
 # --- Manager of OpenSesame UI --- #
 class UIManager:
-	def __init__(self, order, keywords, OSH):
-		self.order = order
+	def __init__(self, keywords, experimentCanvas):
 		self.keywords = keywords
-		self.OSH = OSH
-		self.trialCanvas = self.OSH.Canvas()
-		self.trialCanvas.set_font('mono', 18)
+		self.experimentCanvas = experimentCanvas
+
+		self.width = self.experimentCanvas.get_width()
+		self.height = self.experimentCanvas.get_height()
+		self.trialCanvas = None
 
 		# --- UI PARAMETERS --- #
-
 		# Keyword
-		self.KW_y = 340
-		self.KW_xDistance = 400
-		self.KW_xRange = np.linspace(-self.KW_xDistance, self.KW_xDistance, len(self.keywords))
+		self.KW_y = 0.75*self.height
+		self.KW_xDistance = 0.17*self.width
+		self.KW_xRange = np.arange(len(self.keywords))*self.KW_xDistance + 0.5*self.width - self.KW_xDistance*(len(self.keywords)-1)/2
 
 		# Keyword order
-		self.KWO_yOffset = 50
-		self.KWO_fontSize = 40
+		self.KWO_yOffset = 0.05*self.height
 
 		# Pose image
-		self.PI_yOffset = -70
-		self.PI_scale = 0.2
+		self.PI_yOffset = -0.15*self.height
+		self.PI_width = 0.05*self.width
 
 		# Video
-		self.VID_y = -340
-		self.VID_height = 440
-		self.VID_width = 670
+		self.VID_y = 0.03*self.height
+		self.VID_height = 0.45*self.height
+		self.VID_width = 0.45*self.width
 		self.VID_duration = 4
 
-		# Ear
-		self.EAR_xOffset = 70
-		self.EAR_fontSize = 100
+		# Icon
+		self.ICON_xOffset = 0.05*self.width
+		self.ICON_width = 0.1*self.width
+
+	def loadResources(self, baseFolder):
+		pyg.init()
+		self.keywordFont = pyg.font.SysFont("monospace", 28)
+		self.keywordOrderFont = pyg.font.SysFont("monospace", 60, bold=True)
+
+		self.images = []
+		for _ in range(len(self.keywords)):
+			# TODO: Change to actual filename
+			imagePath = f"{baseFolder}/poses/demo.png"
+			fullImage = pyg.image.load(imagePath)
+			resizedImage = pyg.transform.smoothscale(fullImage, (round(self.PI_width), round(self.PI_width*(fullImage.get_height()/fullImage.get_width()))))
+			self.images.append(resizedImage.convert_alpha())
+
+		self.icons = {}
+		for iconName in ["ear", "eye"]:
+			fullImage = pyg.image.load(f"{baseFolder}/icons/{iconName}.png")
+			resizedImage = pyg.transform.smoothscale(fullImage, (round(self.ICON_width), round(self.ICON_width*(fullImage.get_height()/fullImage.get_width()))))
+			self.icons[iconName] = resizedImage.convert_alpha()
+
+		# Prepare static background
+		self.trialBGCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
+
+		self.drawKeywords(self.trialBGCanvas)
+		self.drawPoseImages(self.trialBGCanvas)
+		self.drawVideoPlaceholder(self.trialBGCanvas)
+		self.resetOverlays()
+
+	def createCanvas(self, order, symbol):
+		self.drawKeywordOrder(self.keywordOrderverlay, order)
+		self.drawIcon(self.iconOverLayCanvas, symbol)
+		self.markRecognitionInactive()
+
+	def resetOverlays(self):
+		self.iconOverLayCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
+		self.keywordOrderverlay = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
+		self.keywordStatusOverlay = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
+		self.iconShown = False
+		self.isPresentingITI = False
 
 	def show(self):
-		self.trialCanvas.show()
+		assert self.trialBGCanvas is not None, "Trial canvas uninitialised"
+		self.experimentCanvas.fill((255, 255, 255))
+		self.experimentCanvas.blit(self.trialBGCanvas, (0,0))
+		if not self.isPresentingITI:
+			self.experimentCanvas.blit(self.keywordOrderverlay, (0,0))
+			self.experimentCanvas.blit(self.keywordStatusOverlay, (0,0))
+		if self.iconShown:
+			self.experimentCanvas.blit(self.iconOverLayCanvas, (0,0))
+		pyg.display.flip()
 
-	def drawVideo(self):
-		# TODO: Change to actual video
-		self.trialCanvas["naoVideo"] = self.OSH.Rect(x = -self.VID_width/2, y = self.VID_y, w = self.VID_width, h = self.VID_height, fill = True, color = 'gray')
-		self.trialCanvas["naoVideoDescription"]  = self.OSH.Text("Idle", x = 0, y = self.VID_y-40)
+	def drawVideoPlaceholder(self, canvas):
+		rect = pyg.Rect(self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height)
+		canvas.fill((0, 0, 0), rect = rect)
 
-	def updateVideo(self, orderIndex):
-		# TODO: Change to actual video
-		videoDescription = self.keywords[self.order[orderIndex]] if orderIndex is not None else "Idle"
-		self.trialCanvas["naoVideoDescription"].text = videoDescription
-
-	def drawPoseImages(self):
+	def drawPoseImages(self, canvas):
 		for i in range(len(self.keywords)):
-			# TODO: Change to actual filename
-			imagePath = f"{self.OSH.baseFolder}/poses/demo.png" #{keywords[i].title().replace(' ', '')}"
-			self.trialCanvas[f"poseImage{i}"] = self.OSH.Image(imagePath, x = self.KW_xRange[i], y = self.KW_y + self.PI_yOffset, scale = self.PI_scale)
+			image = self.images[i]
+			canvas.blit(image, (self.KW_xRange[i]-image.get_width()/2, self.KW_y + self.PI_yOffset))
 
-	def drawKeywords(self):
+	def drawKeywords(self, canvas):
 		for i in range(len(self.keywords)):
-			self.trialCanvas[f"keywordText{i}"] = self.OSH.Text(self.keywords[i], x = self.KW_xRange[i], y = self.KW_y)
+			label = self.keywordFont.render(self.keywords[i], True, (0,0,0))
+			canvas.blit(label, (self.KW_xRange[i]-label.get_width()/2, self.KW_y))
 
-	def drawKeywordOrder(self):
-		for i in range(len(self.order)):
-			self.trialCanvas[f"orderText{i}"] = self.OSH.Text(f"{i+1}", x = self.KW_xRange[self.order[i]], y = self.KW_y+self.KWO_yOffset, font_size = self.KWO_fontSize)
+	def drawKeywordOrder(self, canvas, order):
+		for i in range(len(order)):
+			label = self.keywordOrderFont.render(f"{i+1}", True, (0,0,0))
+			canvas.blit(label, (self.KW_xRange[order[i]]-label.get_width()/2, self.KW_y+self.KWO_yOffset))
 
-	def drawListening(self, symbol):
-		self.trialCanvas["listeningIndication"] = self.OSH.Text(symbol, x = self.VID_width/2+self.EAR_xOffset, y = self.VID_y+self.VID_height/2, font_size = self.EAR_fontSize)
+	def drawIcon(self, canvas, symbol):
+		assert symbol in ["eye", "ear"], "Requested symbol not preloaded"
+		icon = self.icons[symbol]
+		canvas.blit(icon, (self.width/2+self.VID_width/2+self.ICON_xOffset-icon.get_width()/2, self.VID_y+self.VID_height/2-icon.get_height()/2))
 
-	def markCorrectKeyword(self, orderIndex):
-		self.trialCanvas[f"orderText{orderIndex}"].color = 'green'
+	def markCorrectKeyword(self, orderIndex, order):
+		label = self.keywordOrderFont.render(f"{orderIndex+1}", True, (0,255,0))
+		self.keywordStatusOverlay.blit(label, (self.KW_xRange[order[orderIndex]]-label.get_width()/2, self.KW_y+self.KWO_yOffset))
 
-	def unmarkCorrectKeyword(self, orderIndex):
-		self.trialCanvas[f"orderText{orderIndex}"].color = 'black'
+	def markRecognitionActive(self):
+		self.iconShown = True
 
-	def markListening(self):
-		self.trialCanvas["listeningIndication"].visible = True
-
-	def markDeaf(self):
-		self.trialCanvas["listeningIndication"].visible = False
+	def markRecognitionInactive(self):
+		self.iconShown = False
 
 	def presentITI(self):
-		for i in range(len(self.order)):
-			self.trialCanvas[f"orderText{i}"].color = 'white'
+		self.isPresentingITI = True
 
 # --- Manager of trial --- #
 class TrialManager:
 
-	def __init__(self, order, keywords, OSH):
+	def __init__(self, order, keywords, _UImanager):
 		self.order = order
 		self.progress = 0
 		self.keywords = keywords
 		self.keywordAmount = len(self.keywords)
 
-		self.UIManager = UIManager(self.order, self.keywords, OSH)
+		self.UIManager = _UImanager
 
 		# --- TRIAL PARAMETERS --- #
 		self.ITI = 3 # seconds
 
 
-	def prepare(self, listeningSymbol):
-		# Draw keywords
-		self.UIManager.drawKeywords()
-		self.UIManager.drawKeywordOrder()
-		self.UIManager.drawPoseImages()
-		self.UIManager.drawVideo()
-		self.UIManager.drawListening(listeningSymbol)
+	def prepare(self, icon):
+		# Draw static image
+		self.UIManager.createCanvas(self.order, icon)
 
 	def run(self, recognizer, timeoutPerCommand):
-		self.UIManager.show()
 		startTime = time.time()
 
 		# Main loop
 		while self.progress != len(self.order): 
-			self.UIManager.markListening()
+			self.UIManager.markRecognitionActive()
 			self.UIManager.show()
 
 			moveIndex = recognizer.recognize(timeout = timeoutPerCommand)
-			self.UIManager.markDeaf()
+			self.UIManager.markRecognitionInactive()
 
 			if moveIndex is None:
 				print("No keyword detected, ending trial")
@@ -142,6 +169,9 @@ class TrialManager:
 		self.UIManager.show()
 		time.sleep(self.ITI)
 
+
+		self.UIManager.resetOverlays()
+
 		# TODO: Determine which information needs to be logged / returned
 		return self.progress, (startTime - endTime)
 
@@ -159,7 +189,7 @@ class TrialManager:
 		self.progress += 1
 
 		transformedIndex = self.order.index(moveIndex)
-		self.UIManager.markCorrectKeyword(transformedIndex)
+		self.UIManager.markCorrectKeyword(transformedIndex, self.order)
 		self.UIManager.updateVideo(orderIndex = transformedIndex)
 		self.UIManager.show()
 
