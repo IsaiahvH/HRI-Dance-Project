@@ -1,6 +1,8 @@
 import time
 import numpy as np
 import pygame as pyg
+import cv2
+from pygame import movie
 
 # --- Manager of OpenSesame UI --- #
 class UIManager:
@@ -30,6 +32,7 @@ class UIManager:
 		self.VID_height = 0.45*self.height
 		self.VID_width = 0.45*self.width
 		self.VID_duration = 4
+		self.current_video_order = []
 
 		# Icon
 		self.ICON_xOffset = 0.05*self.width
@@ -54,6 +57,22 @@ class UIManager:
 			resizedImage = pyg.transform.smoothscale(fullImage, (round(self.ICON_width), round(self.ICON_width*(fullImage.get_height()/fullImage.get_width()))))
 			self.icons[iconName] = resizedImage.convert_alpha()
 
+		image_names = ["air guitar", "clap your hands", "raise the roof", "hands on hips", "do the disco", "give a box"]
+		self.image_video = {}
+		for image in image_names:
+			full_image = pyg.image.load(f"{baseFolder}/icons/{image}.png")
+			resized_image = pyg.transform.smoothscale(full_image, (round(self.VID_width), round(self.VID_width*(full_image.get_height()/full_image.get_width()))))
+			self.image_video[image] = resized_image.convert_alpha()
+
+		pose_names = ["air guitar", "clap your hands", "raise roof", "hips", "disco"]
+		self.videos = {}
+		for pose_name in pose_names:
+			full_video = f"{baseFolder}/poses/{pose_name}.mp4"
+			#resized_video = pyg.transform.smoothscale(full_video,(round(self.VID_width), round(self.VID_height)))
+			self.videos[pose_name] = full_video
+			#self.videos.append(f"{baseFolder}/poses/air_guitar.mp4")
+		# TODO fill list with videos
+
 		# Prepare static background
 		self.trialBGCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
 
@@ -61,6 +80,8 @@ class UIManager:
 		self.drawPoseImages(self.trialBGCanvas)
 		self.drawVideoPlaceholder(self.trialBGCanvas)
 		self.resetOverlays()
+
+
 
 	def createCanvas(self, order, symbol):
 		self.drawKeywordOrder(self.keywordOrderverlay, order)
@@ -77,7 +98,7 @@ class UIManager:
 	def show(self):
 		assert self.trialBGCanvas is not None, "Trial canvas uninitialised"
 		self.experimentCanvas.fill((255, 255, 255))
-		self.experimentCanvas.blit(self.trialBGCanvas, (0,0))
+		self.experimentCanvas.blit(self.trialBGCanvas, (0, 0))
 		if not self.isPresentingITI:
 			self.experimentCanvas.blit(self.keywordOrderverlay, (0,0))
 			self.experimentCanvas.blit(self.keywordStatusOverlay, (0,0))
@@ -110,7 +131,7 @@ class UIManager:
 		canvas.blit(icon, (self.width/2+self.VID_width/2+self.ICON_xOffset-icon.get_width()/2, self.VID_y+self.VID_height/2-icon.get_height()/2))
 
 	def markCorrectKeyword(self, orderIndex, order):
-		label = self.keywordOrderFont.render(f"{orderIndex+1}", True, (0,255,0))
+		label = self.keywordOrderFont.render(f"{orderIndex+1}", True, (0, 255, 0))
 		self.keywordStatusOverlay.blit(label, (self.KW_xRange[order[orderIndex]]-label.get_width()/2, self.KW_y+self.KWO_yOffset))
 
 	def markRecognitionActive(self):
@@ -121,6 +142,27 @@ class UIManager:
 
 	def presentITI(self):
 		self.isPresentingITI = True
+
+	def temporary_video_updater_image(self, image):
+		image_video = self.image_video[image]
+		self.trialBGCanvas.blit(image_video, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height))
+		# image = self.icons[image]
+		# canvas.blit(icon, (self.width / 2 + self.VID_width / 2 + self.ICON_xOffset - icon.get_width() / 2,
+		# self.VID_y + self.VID_height / 2 - icon.get_height() / 2))
+
+	# runs when new video should be played after word is recognised
+	def updateVideo(self, orderIndex):
+		video_path = self.current_video_order[orderIndex]
+		video = cv2.VideoCapture(video_path)
+		for i in range(1000):
+			retval, frame = video.read()
+			frame = np.rot90(frame)
+			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+			surf = pyg.surfarray.make_surface(frame)
+			pyg.draw.rect(surf, (255, 0, 0),(self.width / 2 - self.VID_width / 2, self.VID_y, self.VID_width, self.VID_height))
+			self.trialBGCanvas.blit(surf, (0, 0))
+			pyg.display.flip()
+
 
 # --- Manager of trial --- #
 class TrialManager:
@@ -175,6 +217,14 @@ class TrialManager:
 		# TODO: Determine which information needs to be logged / returned
 		return self.progress, (startTime - endTime)
 
+	# store the videos already when the order is known
+	def loadVideos(self,order):
+		print("order is something like this")
+		print(order)
+		for i in self.videos:
+			if i.index() + 1 in order:
+				UIManager.current_video_order.append(i)
+
 	def processRecognisedMove(self, moveIndex):
 		print(f"Detected {self.keywords[moveIndex]}", end = '')
 
@@ -190,10 +240,11 @@ class TrialManager:
 
 		transformedIndex = self.order.index(moveIndex)
 		self.UIManager.markCorrectKeyword(transformedIndex, self.order)
-		self.UIManager.updateVideo(orderIndex = transformedIndex)
+		# self.UIManager.updateVideo(orderIndex = transformedIndex)
+		self.UIManager.temporary_video_updater_image(image = self.keywords[moveIndex])
 		self.UIManager.show()
 
 		# Halt until video completes
 		time.sleep(self.UIManager.VID_duration)
-		self.UIManager.updateVideo(orderIndex = None)
+		# self.UIManager.updateVideo(orderIndex = None)
 		self.UIManager.show()
