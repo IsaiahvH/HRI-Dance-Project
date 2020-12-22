@@ -68,12 +68,38 @@ class UIManager:
 		self.videos = {}
 		# from: https://www.codegrepper.com/code-examples/python/python+split+video+into+frames
 		for pose_name in pose_names:
+			full_video = f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name}.mp4"
+			vidcap = cv2.VideoCapture(full_video)
+			success, png_image = vidcap.read()
+			count = 0
+			while success:
+				#current_frame = cv2.imwrite(
+				#	f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name} frames/{pose_name}_frame%d.png" % count,
+				#	image)
+				# print(pose_name)
+				success, png_image = vidcap.read()
+				# print("read new frame: ", success)
+				count += 1
+				if pose_name in self.videos:
+					self.videos[pose_name].append(png_image)
+				else:
+					self.videos[pose_name] = [png_image]
+
+		'''	for pose_name in pose_names:
 			folder = f"{baseFolder}/poses/{pose_name}/ frames"
 			png_list = []
 			for png in folder:
 				png_list.append(png)
 			self.videos[pose_name] = png_list
-
+			np_frames = []
+			cap = cv2.VideoCapture(f'{baseFolder}/poses/{pose_name}.mp4')
+			while True:
+				boolean, frame = cap.read()
+				np_frame = cv2.imread('video', frame)
+				#np_frames.append(np_frame)
+				self.videos[pose_name].append(np_frame)
+				if cap.get(cv2.)
+			#self.videos[pose_name] = np_frames'''
 
 		# Prepare static background
 		self.trialBGCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
