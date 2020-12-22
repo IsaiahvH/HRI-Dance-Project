@@ -64,14 +64,16 @@ class UIManager:
 			resized_image = pyg.transform.smoothscale(full_image, (round(self.VID_width), round(self.VID_width*(full_image.get_height()/full_image.get_width()))))
 			self.image_video[image] = resized_image.convert_alpha()
 
-		pose_names = ["air guitar", "clap your hands", "raise roof", "hips", "disco"]
+		pose_names = ["air guitar", "clap your hands", "raise the roof", "hands on hips", "do the disco", "give a box"]
 		self.videos = {}
+		# from: https://www.codegrepper.com/code-examples/python/python+split+video+into+frames
 		for pose_name in pose_names:
-			full_video = f"{baseFolder}/poses/{pose_name}.mp4"
-			#resized_video = pyg.transform.smoothscale(full_video,(round(self.VID_width), round(self.VID_height)))
-			self.videos[pose_name] = full_video
-			#self.videos.append(f"{baseFolder}/poses/air_guitar.mp4")
-		# TODO fill list with videos
+			folder = f"{baseFolder}/poses/{pose_name}/ frames"
+			png_list = []
+			for png in folder:
+				png_list.append(png)
+			self.videos[pose_name] = png_list
+
 
 		# Prepare static background
 		self.trialBGCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
@@ -146,22 +148,12 @@ class UIManager:
 	def temporary_video_updater_image(self, image):
 		image_video = self.image_video[image]
 		self.trialBGCanvas.blit(image_video, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height))
-		# image = self.icons[image]
-		# canvas.blit(icon, (self.width / 2 + self.VID_width / 2 + self.ICON_xOffset - icon.get_width() / 2,
-		# self.VID_y + self.VID_height / 2 - icon.get_height() / 2))
 
 	# runs when new video should be played after word is recognised
-	def updateVideo(self, orderIndex):
-		video_path = self.current_video_order[orderIndex]
-		video = cv2.VideoCapture(video_path)
-		for i in range(1000):
-			retval, frame = video.read()
-			frame = np.rot90(frame)
-			frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-			surf = pyg.surfarray.make_surface(frame)
-			pyg.draw.rect(surf, (255, 0, 0),(self.width / 2 - self.VID_width / 2, self.VID_y, self.VID_width, self.VID_height))
-			self.trialBGCanvas.blit(surf, (0, 0))
-			pyg.display.flip()
+	def updateVideo(self, orderIndex, image):
+		image_videos = self.videos[image]
+		for i in image_videos:
+			self.trialBGCanvas.blit((i, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height)))
 
 
 # --- Manager of trial --- #
@@ -240,8 +232,8 @@ class TrialManager:
 
 		transformedIndex = self.order.index(moveIndex)
 		self.UIManager.markCorrectKeyword(transformedIndex, self.order)
-		# self.UIManager.updateVideo(orderIndex = transformedIndex)
-		self.UIManager.temporary_video_updater_image(image = self.keywords[moveIndex])
+		self.UIManager.updateVideo(orderIndex = transformedIndex, image = self.keywords[moveIndex])
+		# self.UIManager.temporary_video_updater_image(image = self.keywords[moveIndex])
 		self.UIManager.show()
 
 		# Halt until video completes

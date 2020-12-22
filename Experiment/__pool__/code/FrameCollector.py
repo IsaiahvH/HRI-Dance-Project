@@ -14,7 +14,7 @@ for pose_name in pose_names:
     success, image = vidcap.read()
     count = 0
     while success:
-        current_frame = cv2.imwrite(f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name}_frame%d.png" % count, image)
+        current_frame = cv2.imwrite(f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name} frames/{pose_name}_frame%d.png" % count, image)
         print(pose_name)
         success, image = vidcap.read()
         print("read new frame: ", success)
@@ -27,7 +27,7 @@ for pose_name in pose_name_exception:
     success, image = vidcap.read()
     count = 0
     while success:
-        current_frame = cv2.imwrite(f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name}_frame%d.png" % count, image)
+        current_frame = cv2.imwrite(f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name} frames/{pose_name}_frame%d.png" % count, image)
         print(pose_name)
         success, image = vidcap.read()
         print("read new frame: ", success)
