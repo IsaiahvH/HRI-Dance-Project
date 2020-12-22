@@ -2,7 +2,8 @@ import time
 import numpy as np
 import pygame as pyg
 import cv2
-from pygame import movie
+from PIL import Image as im
+
 
 # --- Manager of OpenSesame UI --- #
 class UIManager:
@@ -70,36 +71,19 @@ class UIManager:
 		for pose_name in pose_names:
 			full_video = f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name}.mp4"
 			vidcap = cv2.VideoCapture(full_video)
-			success, png_image = vidcap.read()
+			success, frame = vidcap.read()
 			count = 0
 			while success:
-				#current_frame = cv2.imwrite(
-				#	f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name} frames/{pose_name}_frame%d.png" % count,
-				#	image)
-				# print(pose_name)
-				success, png_image = vidcap.read()
-				# print("read new frame: ", success)
+				success, frame = vidcap.read()
 				count += 1
-				if pose_name in self.videos:
-					self.videos[pose_name].append(png_image)
-				else:
-					self.videos[pose_name] = [png_image]
-
-		'''	for pose_name in pose_names:
-			folder = f"{baseFolder}/poses/{pose_name}/ frames"
-			png_list = []
-			for png in folder:
-				png_list.append(png)
-			self.videos[pose_name] = png_list
-			np_frames = []
-			cap = cv2.VideoCapture(f'{baseFolder}/poses/{pose_name}.mp4')
-			while True:
-				boolean, frame = cap.read()
-				np_frame = cv2.imread('video', frame)
-				#np_frames.append(np_frame)
-				self.videos[pose_name].append(np_frame)
-				if cap.get(cv2.)
-			#self.videos[pose_name] = np_frames'''
+				#frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+				if success:
+					frame = np.reshape(frame, (632, 578, 3))
+					frame = im.fromarray(frame, 'RGB')
+					if pose_name in self.videos:
+						self.videos[pose_name].append(frame)
+					else:
+						self.videos[pose_name] = [frame]
 
 		# Prepare static background
 		self.trialBGCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
@@ -177,10 +161,14 @@ class UIManager:
 
 	# runs when new video should be played after word is recognised
 	def updateVideo(self, orderIndex, image):
-		image_videos = self.videos[image]
-		for i in image_videos:
-			self.trialBGCanvas.blit((i, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height)))
+		image_arrays = self.videos[image]
 
+		for array in image_arrays:
+			mode = array.mode
+			size = array.size
+			data = array.tobytes()
+			py_image = pyg.image.fromstring(data, size, mode)
+			self.trialBGCanvas.blit(py_image, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height))
 
 # --- Manager of trial --- #
 class TrialManager:
@@ -190,7 +178,6 @@ class TrialManager:
 		self.progress = 0
 		self.keywords = keywords
 		self.keywordAmount = len(self.keywords)
-
 		self.UIManager = _UImanager
 
 		# --- TRIAL PARAMETERS --- #
@@ -220,7 +207,7 @@ class TrialManager:
 		
 		endTime = time.time()
 		if self.progress == len(self.order):
-			print("Completed trial succesfully")
+			print("Completed trial successfully")
 		else:
 			print("Failed trial")
 
@@ -236,7 +223,8 @@ class TrialManager:
 		return self.progress, (startTime - endTime)
 
 	# store the videos already when the order is known
-	def loadVideos(self,order):
+	def loadVideos(self, order):
+		# TODO use this function
 		print("order is something like this")
 		print(order)
 		for i in self.videos:
