@@ -192,7 +192,7 @@ class ExperimentLogger:
 		# TODO: implement reset of logging, set all to-log variables to "-"
 		for varname in self.var.vars():
 			if varname.startswith("LL_"):
-				self.var.set("NA")
+				self.var.set(varname, "NA")
 
 
 	def log(self, name, value):
@@ -209,6 +209,13 @@ class TrialManager:
 		self.keywordAmount = len(self.keywords)
 		self.UIManager = _UImanager
 		self.logger = logger
+
+		# For storing the variables in before finally logging them:
+		self.recognized_commands = []
+		self.start_times_listening = []
+		self.end_times_listening = []
+		self.keyword_detection_times = []
+		self.correct_keywords = []
 
 		# --- TRIAL PARAMETER --- #
 		self.ITI = 3 # seconds
@@ -227,9 +234,13 @@ class TrialManager:
 			self.UIManager.markRecognitionActive()
 			self.UIManager.show()
 
-			self.logger.log(f"LL_TimeStartListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			# self.logger.log(f"LL_TimeStartListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.start_times_listening.append(time.time())
+
 			moveIndex = recognizer.recognize(timeout = timeoutPerCommand)
-			self.logger.log(f"LL_TimeStoppedListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+
+			# self.logger.log(f"LL_TimeStoppedListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.end_times_listening.append(time.time())
 
 			# Automatic advancement, if you can't be loud in the room for debugging
 			# time.sleep(1)
@@ -247,6 +258,13 @@ class TrialManager:
 			self.processRecognisedMove(moveIndex)
 		
 		self.logger.log("LL_TimeTrialEnd", time.time())
+
+		self.logger.log("LL_DetectedCommands", self.recognized_commands)
+		self.logger.log("LL_TimeStartListening", self.start_times_listening)
+		self.logger.log("LL_TimeStopListening", self.end_times_listening)
+		self.logger.log("LL_TimeKeywordDetection", self.keyword_detection_times)
+		self.logger.log("LL_CorrectKeyword", self.correct_keywords)
+
 		self.logger.log("LL_TrialStatus", "success")
 		if self.progress == len(self.order):
 			print("Completed trial successfully")
@@ -275,31 +293,49 @@ class TrialManager:
 		print(f"Detected {self.keywords[moveIndex]}", end = '')
 
 		if moveIndex not in self.order:
+
+			self.keyword_detection_times.append(time.time())
+			self.correct_keywords.append(0)
+
 			print(", but not in current trial; ignoring")
-			self.logger.log(f"LL_TimeInvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
-			self.logger.log(f"LL_InvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", moveIndex)
+			# self.logger.log(f"LL_TimeInvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			# self.logger.log(f"LL_InvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", moveIndex)
 			self.attempts += 1
 
 			self.UIManager.markCrossActive()
 			self.UIManager.show()
 			self.UIManager.playVideo(moveIndex)
 			self.UIManager.markCrossInactive()
+
+			self.recognized_commands.append(moveIndex)
+
 			return
 		elif moveIndex != self.order[self.progress]:
+
+			self.keyword_detection_times.append(time.time())
+			self.correct_keywords.append(0)
+
 			print(", but not the next keyword; ignoring")
-			self.logger.log(f"LL_TimeInvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
-			self.logger.log(f"LL_InvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", moveIndex)
+			# self.logger.log(f"LL_TimeInvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			# self.logger.log(f"LL_InvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", moveIndex)
 			self.attempts += 1
 
 			self.UIManager.markCrossActive()
 			self.UIManager.show()
 			self.UIManager.playVideo(moveIndex)
 			self.UIManager.markCrossInactive()
+
+			self.recognized_commands.append(moveIndex)
+
 			return
 
 		print(", advancing progress")
-		self.logger.log(f"LL_TimeValidKeywordDetectedAtProgress_{self.progress}", time.time())
-		self.logger.log(f"LL_KeywordDetectedAtProgress_{self.progress}", moveIndex)
+		#self.logger.log(f"LL_TimeValidKeywordDetectedAtProgress_{self.progress}", time.time())
+		#self.logger.log(f"LL_KeywordDetectedAtProgress_{self.progress}", moveIndex)
+
+		self.keyword_detection_times.append(time.time())
+		self.correct_keywords.append(1)
+
 		self.logger.log(f"LL_AttemptsForProgress_{self.progress}", self.attempts+1)
 		self.progress += 1
 		self.attempts = 0
@@ -313,3 +349,6 @@ class TrialManager:
 
 		# Halt until video completes
 		self.UIManager.show()
+
+		self.recognized_commands.append(moveIndex)
+
