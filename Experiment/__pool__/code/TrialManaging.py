@@ -30,9 +30,9 @@ class UIManager:
 
 		# Video
 		self.VID_y = 0.01*self.height
-		self.VID_height = 0.3*self.height
+		self.VID_height = 0.45*self.height
 		self.VID_width = (578.0/632.0)*self.VID_height
-		self.VID_duration = 4
+		self.VID_frameDelay = 0.01
 		self.VID_RECT = pyg.Rect(round(self.width/2-self.VID_width/2), round(self.VID_y), round(self.VID_width), round(self.VID_height))
 
 		# Icon
@@ -63,37 +63,28 @@ class UIManager:
 			resizedImage = pyg.transform.smoothscale(fullImage, (round(self.ICON_width), round(self.ICON_width*(fullImage.get_height()/fullImage.get_width()))))
 			self.icons[iconName] = resizedImage.convert_alpha()
 
-		self.image_video = {}
-		for i in range(len(self.keywords)):
-			full_image = pyg.image.load(f"{baseFolder}/icons/tmp/{keywordsUnderscored[i]}.png")
-			resized_image = pyg.transform.smoothscale(full_image, (round(self.VID_width), round(self.VID_width*(full_image.get_height()/full_image.get_width()))))
-			self.image_video[i] = resized_image.convert_alpha()
-
 		print("    Preloading video streams")
 		self.videos = {}
 		VID_PIXELS = (578, 632)
-		VID_DIM = VID_PIXELS #((int(self.VID_width), int(self.VID_height)))
+		VID_DIM = ((int(self.VID_width), int(self.VID_height)))
 		# from: https://www.codegrepper.com/code-examples/python/python+split+video+into+frames
 		for i in range(len(self.keywords)):
 			full_video = f"{baseFolder}/poses/movies/{keywordsUnderscored[i]}.mp4"
 			capture = cv2.VideoCapture(full_video)
-			capture.set(cv2.CAP_PROP_FRAME_WIDTH, VID_PIXELS[0])
-			capture.set(cv2.CAP_PROP_FRAME_HEIGHT, VID_PIXELS[1])
 			frameCount = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
 			self.videos[i] = [] #np.zeros((frameCount, VID_DIM[0], VID_DIM[1], 3))
-			# j = 0
 			success, frame = capture.read()
 			assert (frame.shape[1],frame.shape[0]) == VID_PIXELS, "Video stream of unexpected resolution."
 			while success:
+				frame = cv2.resize(frame, VID_DIM)
 				frame = cv2.transpose(frame)
 				frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
-				# frame = cv2.resize(frame, (VID_DIM[1], VID_DIM[0]), interpolation = cv2.INTER_AREA)
-				# assert j < frameCount
-				# self.videos[i][j] = frame
 				self.videos[i].append(frame)
 				success, frame = capture.read()
-				# j += 1
+
+		fullImage = pyg.image.load(f"{baseFolder}/poses/idle.jpg")
+		self.idleImage = pyg.transform.smoothscale(fullImage, VID_DIM)
 
 		# Prepare static background
 		self.trialBGCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
@@ -131,7 +122,8 @@ class UIManager:
 		pyg.display.flip()
 
 	def drawVideoPlaceholder(self, canvas):
-		canvas.fill((0, 0, 0), rect = self.VID_RECT)
+		# canvas.fill((0, 0, 0), rect = self.VID_RECT)
+		canvas.blit(self.idleImage, self.VID_RECT)
 
 	def drawPoseImages(self, canvas):
 		for i in range(len(self.keywords)):
@@ -166,10 +158,6 @@ class UIManager:
 	def presentITI(self):
 		self.isPresentingITI = True
 
-	def temporary_video_updater_image(self, image):
-		image_video = self.image_video[image]
-		self.trialBGCanvas.blit(image_video, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height))
-
 	# runs when new video should be played after word is recognised
 	def playVideo(self, index):
 		frameArray = self.videos[index]
@@ -178,17 +166,31 @@ class UIManager:
 			pyg.surfarray.blit_array(self.videoCanvas, frame)
 			self.experimentCanvas.blit(self.videoCanvas, self.VID_RECT)
 			pyg.display.flip()
+			time.sleep(self.VID_frameDelay)
+
+class ExperimentLogger:
+	def __init__(self, var):
+		self.var = var
+
+	def reset(self):
+		self.var.clear(preserve = ["order", "fixedOrder", "practice", "interface", "timeoutPerCommand", "debugMode", "keywords", "forceGestureMode"])
+
+	def log(self, name, value):
+		self.var.set(name, value)
+
 			
 
 # --- Manager of trial --- #
 class TrialManager:
 
-	def __init__(self, order, keywords, _UImanager):
+	def __init__(self, order, keywords, _UImanager, logger):
 		self.order = order
 		self.progress = 0
+		self.attempts = 0
 		self.keywords = keywords
 		self.keywordAmount = len(self.keywords)
 		self.UIManager = _UImanager
+		self.logger = logger
 
 		# --- TRIAL PARAMETERS --- #
 		self.ITI = 3 # seconds
@@ -199,38 +201,46 @@ class TrialManager:
 		self.UIManager.createCanvas(self.order, icon)
 
 	def run(self, recognizer, timeoutPerCommand):
-		startTime = time.time()
+		self.logger.log("TimeTrialStart", time.time())
 
 		# Main loop
 		while self.progress != len(self.order): 
 			self.UIManager.markRecognitionActive()
 			self.UIManager.show()
 
+			self.logger.log(f"TimeStartListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
 			moveIndex = recognizer.recognize(timeout = timeoutPerCommand)
+			self.logger.log(f"TimeStoppedListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+
+			# Automatic advancement, if you can't be loud in the room for debugging
+			# time.sleep(1)
+			# moveIndex = self.order[self.progress]
+
 			self.UIManager.markRecognitionInactive()
 
 			if moveIndex is None:
 				print("No keyword detected, ending trial")
+				self.logger.log("TrialStatus", "failed")
+				self.logger.log("ProgressTrialFailedAt", self.progress)
 				break
 			
 			self.processRecognisedMove(moveIndex)
 		
-		endTime = time.time()
+		self.logger.log("TimeTrialSuccessfulEnd", time.time())
+		self.logger.log("TrialStatus", "success")
 		if self.progress == len(self.order):
 			print("Completed trial successfully")
 		else:
 			print("Failed trial")
 
 		print("Presenting inter-trial-interval")
+		self.logger.log("TimeITIStart", time.time())
 		self.UIManager.presentITI()
 		self.UIManager.show()
 		time.sleep(self.ITI)
 
-
+		self.logger.log("TimeITIEnd", time.time())
 		self.UIManager.resetOverlays()
-
-		# TODO: Determine which information needs to be logged / returned
-		return self.progress, (startTime - endTime)
 
 	# store the videos already when the order is known
 	def loadVideos(self, order):
@@ -246,13 +256,21 @@ class TrialManager:
 
 		if moveIndex not in self.order:
 			print(", but not in current trial; ignoring")
+			self.logger.log(f"TimeInvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.attempts += 1
 			return
 		elif moveIndex != self.order[self.progress]:
 			print(", but not the next keyword; ignoring")
+			self.logger.log(f"TimeInvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.attempts += 1
 			return
 
 		print(", advancing progress")
+		self.logger.log(f"TimeValidKeywordDetectedAtProgress_{self.progress}", time.time())
+		self.logger.log(f"KeywordDetectedAtProgress_{self.progress}", moveIndex)
+		self.logger.log(f"AttemptsForProgress_{self.progress}", self.attempts)
 		self.progress += 1
+		self.attempts = 0
 
 		transformedIndex = self.order.index(moveIndex)
 		self.UIManager.markCorrectKeyword(transformedIndex, self.order)
@@ -262,5 +280,4 @@ class TrialManager:
 		self.UIManager.playVideo(moveIndex)
 
 		# Halt until video completes
-		time.sleep(self.UIManager.VID_duration)
 		self.UIManager.show()
