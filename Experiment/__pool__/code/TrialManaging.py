@@ -101,14 +101,17 @@ class UIManager:
 	def createCanvas(self, order, symbol):
 		self.drawKeywordOrder(self.keywordOrderverlay, order)
 		self.drawIcon(self.iconOverLayCanvas, symbol)
+		self.drawCross(self.crossOverLayCanvas)
 		self.markRecognitionInactive()
 
 	def resetOverlays(self):
 		self.iconOverLayCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
 		self.keywordOrderverlay = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
 		self.keywordStatusOverlay = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
+		self.crossOverLayCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
 		self.iconShown = False
 		self.isPresentingITI = False
+		self.crossIsShown = False
 
 	def show(self):
 		assert self.trialBGCanvas is not None, "Trial canvas uninitialised"
@@ -119,6 +122,8 @@ class UIManager:
 			self.experimentCanvas.blit(self.keywordStatusOverlay, (0,0))
 		if self.iconShown:
 			self.experimentCanvas.blit(self.iconOverLayCanvas, (0,0))
+		if self.crossIsShown:
+			self.experimentCanvas.blit(self.crossOverLayCanvas, (0,0))
 		pyg.display.flip()
 
 	def drawVideoPlaceholder(self, canvas):
@@ -140,6 +145,10 @@ class UIManager:
 			label = self.keywordOrderFont.render(f"{i+1}", True, (0,0,0))
 			canvas.blit(label, (self.KW_xRange[order[i]]-label.get_width()/2, self.KW_y+self.KWO_yOffset))
 
+	def drawCross(self, canvas):
+		label = self.keywordOrderFont.render("x", True, (255,0,0))
+		canvas.blit(label, (self.width/2-self.VID_width/2-self.ICON_xOffset-label.get_width()/2, self.VID_y+self.VID_height/2-label.get_height()/2))
+
 	def drawIcon(self, canvas, symbol):
 		assert symbol in ["eye", "ear"], "Requested symbol not preloaded"
 		icon = self.icons[symbol]
@@ -154,6 +163,12 @@ class UIManager:
 
 	def markRecognitionInactive(self):
 		self.iconShown = False
+
+	def markCrossActive(self):
+		self.crossIsShown = True
+
+	def markCrossInactive(self):
+		self.crossIsShown = False
 
 	def presentITI(self):
 		self.isPresentingITI = True
@@ -173,12 +188,15 @@ class ExperimentLogger:
 		self.var = var
 
 	def reset(self):
-		self.var.clear(preserve = ["order", "fixedOrder", "practice", "interface", "timeoutPerCommand", "debugMode", "keywords", "forceGestureMode"])
+		# TODO: Test effect of column / log name addition later in experiment on .CSV file
+		# TODO: implement reset of logging, set all to-log variables to "-"
+		for varname in self.var.vars():
+			if varname.startswith("LL_"):
+				self.var.set("NA")
+
 
 	def log(self, name, value):
 		self.var.set(name, value)
-
-			
 
 # --- Manager of trial --- #
 class TrialManager:
@@ -192,7 +210,7 @@ class TrialManager:
 		self.UIManager = _UImanager
 		self.logger = logger
 
-		# --- TRIAL PARAMETERS --- #
+		# --- TRIAL PARAMETER --- #
 		self.ITI = 3 # seconds
 
 
@@ -201,16 +219,17 @@ class TrialManager:
 		self.UIManager.createCanvas(self.order, icon)
 
 	def run(self, recognizer, timeoutPerCommand):
-		self.logger.log("TimeTrialStart", time.time())
+		self.logger.reset()
+		self.logger.log("LL_TimeTrialStart", time.time())
 
 		# Main loop
 		while self.progress != len(self.order): 
 			self.UIManager.markRecognitionActive()
 			self.UIManager.show()
 
-			self.logger.log(f"TimeStartListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.logger.log(f"LL_TimeStartListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
 			moveIndex = recognizer.recognize(timeout = timeoutPerCommand)
-			self.logger.log(f"TimeStoppedListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.logger.log(f"LL_TimeStoppedListeningForProgress_{self.progress}_Attempt_{self.attempts}", time.time())
 
 			# Automatic advancement, if you can't be loud in the room for debugging
 			# time.sleep(1)
@@ -220,26 +239,27 @@ class TrialManager:
 
 			if moveIndex is None:
 				print("No keyword detected, ending trial")
-				self.logger.log("TrialStatus", "failed")
-				self.logger.log("ProgressTrialFailedAt", self.progress)
+				self.logger.log("LL_TimeTrialEnd", time.time())
+				self.logger.log("LL_TrialStatus", "failed")
+				self.logger.log("LL_ProgressTrialFailedAt", self.progress)
 				break
 			
 			self.processRecognisedMove(moveIndex)
 		
-		self.logger.log("TimeTrialSuccessfulEnd", time.time())
-		self.logger.log("TrialStatus", "success")
+		self.logger.log("LL_TimeTrialEnd", time.time())
+		self.logger.log("LL_TrialStatus", "success")
 		if self.progress == len(self.order):
 			print("Completed trial successfully")
 		else:
 			print("Failed trial")
 
 		print("Presenting inter-trial-interval")
-		self.logger.log("TimeITIStart", time.time())
+		self.logger.log("LL_TimeITIStart", time.time())
 		self.UIManager.presentITI()
 		self.UIManager.show()
 		time.sleep(self.ITI)
 
-		self.logger.log("TimeITIEnd", time.time())
+		self.logger.log("LL_TimeITIEnd", time.time())
 		self.UIManager.resetOverlays()
 
 	# store the videos already when the order is known
@@ -256,19 +276,31 @@ class TrialManager:
 
 		if moveIndex not in self.order:
 			print(", but not in current trial; ignoring")
-			self.logger.log(f"TimeInvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.logger.log(f"LL_TimeInvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.logger.log(f"LL_InvalidContextKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", moveIndex)
 			self.attempts += 1
+
+			self.UIManager.markCrossActive()
+			self.UIManager.show()
+			self.UIManager.playVideo(moveIndex)
+			self.UIManager.markCrossInactive()
 			return
 		elif moveIndex != self.order[self.progress]:
 			print(", but not the next keyword; ignoring")
-			self.logger.log(f"TimeInvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.logger.log(f"LL_TimeInvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", time.time())
+			self.logger.log(f"LL_InvalidOrderKeywordDetectedAtProgress_{self.progress}_Attempt_{self.attempts}", moveIndex)
 			self.attempts += 1
+
+			self.UIManager.markCrossActive()
+			self.UIManager.show()
+			self.UIManager.playVideo(moveIndex)
+			self.UIManager.markCrossInactive()
 			return
 
 		print(", advancing progress")
-		self.logger.log(f"TimeValidKeywordDetectedAtProgress_{self.progress}", time.time())
-		self.logger.log(f"KeywordDetectedAtProgress_{self.progress}", moveIndex)
-		self.logger.log(f"AttemptsForProgress_{self.progress}", self.attempts)
+		self.logger.log(f"LL_TimeValidKeywordDetectedAtProgress_{self.progress}", time.time())
+		self.logger.log(f"LL_KeywordDetectedAtProgress_{self.progress}", moveIndex)
+		self.logger.log(f"LL_AttemptsForProgress_{self.progress}", self.attempts+1)
 		self.progress += 1
 		self.attempts = 0
 
