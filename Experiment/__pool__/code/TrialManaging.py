@@ -2,7 +2,8 @@ import time
 import numpy as np
 import pygame as pyg
 import cv2
-from pygame import movie
+from PIL import Image as im
+
 
 # --- Manager of OpenSesame UI --- #
 class UIManager:
@@ -28,88 +29,83 @@ class UIManager:
 		self.PI_width = 0.05*self.width
 
 		# Video
-		self.VID_y = 0.03*self.height
-		self.VID_height = 0.45*self.height
-		self.VID_width = 0.45*self.width
+		self.VID_y = 0.01*self.height
+		self.VID_height = 0.3*self.height
+		self.VID_width = (578.0/632.0)*self.VID_height
 		self.VID_duration = 4
-		self.current_video_order = []
+		self.VID_RECT = pyg.Rect(round(self.width/2-self.VID_width/2), round(self.VID_y), round(self.VID_width), round(self.VID_height))
 
 		# Icon
 		self.ICON_xOffset = 0.05*self.width
 		self.ICON_width = 0.1*self.width
 
 	def loadResources(self, baseFolder):
+		print("Loading experiment resources")
 		pyg.init()
+		print("    Preloading fonts")
 		self.keywordFont = pyg.font.SysFont("monospace", 28)
 		self.keywordOrderFont = pyg.font.SysFont("monospace", 60, bold=True)
+		keywordsUnderscored = list(keyword.replace(' ', '_') for keyword in self.keywords)
 
+		print("    Preloading poses")
 		self.images = []
-		for _ in range(len(self.keywords)):
+		for i in range(len(self.keywords)):
 			# TODO: Change to actual filename
-			imagePath = f"{baseFolder}/poses/demo.png"
+			imagePath = f"{baseFolder}/poses/static/{keywordsUnderscored[i]}.png"
 			fullImage = pyg.image.load(imagePath)
 			resizedImage = pyg.transform.smoothscale(fullImage, (round(self.PI_width), round(self.PI_width*(fullImage.get_height()/fullImage.get_width()))))
 			self.images.append(resizedImage.convert_alpha())
 
+		print("    Preloading icons")
 		self.icons = {}
 		for iconName in ["ear", "eye"]:
 			fullImage = pyg.image.load(f"{baseFolder}/icons/{iconName}.png")
 			resizedImage = pyg.transform.smoothscale(fullImage, (round(self.ICON_width), round(self.ICON_width*(fullImage.get_height()/fullImage.get_width()))))
 			self.icons[iconName] = resizedImage.convert_alpha()
 
-		image_names = ["air guitar", "clap your hands", "raise the roof", "hands on hips", "do the disco", "give a box"]
 		self.image_video = {}
-		for image in image_names:
-			full_image = pyg.image.load(f"{baseFolder}/icons/{image}.png")
+		for i in range(len(self.keywords)):
+			full_image = pyg.image.load(f"{baseFolder}/icons/tmp/{keywordsUnderscored[i]}.png")
 			resized_image = pyg.transform.smoothscale(full_image, (round(self.VID_width), round(self.VID_width*(full_image.get_height()/full_image.get_width()))))
-			self.image_video[image] = resized_image.convert_alpha()
+			self.image_video[i] = resized_image.convert_alpha()
 
-		pose_names = ["air guitar", "clap your hands", "raise the roof", "hands on hips", "do the disco", "give a box"]
+		print("    Preloading video streams")
 		self.videos = {}
+		VID_PIXELS = (578, 632)
+		VID_DIM = VID_PIXELS #((int(self.VID_width), int(self.VID_height)))
 		# from: https://www.codegrepper.com/code-examples/python/python+split+video+into+frames
-		for pose_name in pose_names:
-			full_video = f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name}.mp4"
-			vidcap = cv2.VideoCapture(full_video)
-			success, png_image = vidcap.read()
-			count = 0
-			while success:
-				#current_frame = cv2.imwrite(
-				#	f"C:/Users/lizzy/PycharmProjects/HRI-Dance-Project/Experiment/__pool__/poses/{pose_name} frames/{pose_name}_frame%d.png" % count,
-				#	image)
-				# print(pose_name)
-				success, png_image = vidcap.read()
-				# print("read new frame: ", success)
-				count += 1
-				if pose_name in self.videos:
-					self.videos[pose_name].append(png_image)
-				else:
-					self.videos[pose_name] = [png_image]
+		for i in range(len(self.keywords)):
+			full_video = f"{baseFolder}/poses/movies/{keywordsUnderscored[i]}.mp4"
+			capture = cv2.VideoCapture(full_video)
+			capture.set(cv2.CAP_PROP_FRAME_WIDTH, VID_PIXELS[0])
+			capture.set(cv2.CAP_PROP_FRAME_HEIGHT, VID_PIXELS[1])
+			frameCount = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-		'''	for pose_name in pose_names:
-			folder = f"{baseFolder}/poses/{pose_name}/ frames"
-			png_list = []
-			for png in folder:
-				png_list.append(png)
-			self.videos[pose_name] = png_list
-			np_frames = []
-			cap = cv2.VideoCapture(f'{baseFolder}/poses/{pose_name}.mp4')
-			while True:
-				boolean, frame = cap.read()
-				np_frame = cv2.imread('video', frame)
-				#np_frames.append(np_frame)
-				self.videos[pose_name].append(np_frame)
-				if cap.get(cv2.)
-			#self.videos[pose_name] = np_frames'''
+			self.videos[i] = [] #np.zeros((frameCount, VID_DIM[0], VID_DIM[1], 3))
+			# j = 0
+			success, frame = capture.read()
+			assert (frame.shape[1],frame.shape[0]) == VID_PIXELS, "Video stream of unexpected resolution."
+			while success:
+				frame = cv2.transpose(frame)
+				frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB) 
+				# frame = cv2.resize(frame, (VID_DIM[1], VID_DIM[0]), interpolation = cv2.INTER_AREA)
+				# assert j < frameCount
+				# self.videos[i][j] = frame
+				self.videos[i].append(frame)
+				success, frame = capture.read()
+				# j += 1
 
 		# Prepare static background
 		self.trialBGCanvas = pyg.Surface((self.width, self.height), flags=pyg.SRCALPHA)
+
+		# Prepare video background
+		self.videoCanvas = pyg.surface.Surface(VID_DIM)
 
 		self.drawKeywords(self.trialBGCanvas)
 		self.drawPoseImages(self.trialBGCanvas)
 		self.drawVideoPlaceholder(self.trialBGCanvas)
 		self.resetOverlays()
-
-
+		print("Loading resources complete!")
 
 	def createCanvas(self, order, symbol):
 		self.drawKeywordOrder(self.keywordOrderverlay, order)
@@ -135,8 +131,7 @@ class UIManager:
 		pyg.display.flip()
 
 	def drawVideoPlaceholder(self, canvas):
-		rect = pyg.Rect(self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height)
-		canvas.fill((0, 0, 0), rect = rect)
+		canvas.fill((0, 0, 0), rect = self.VID_RECT)
 
 	def drawPoseImages(self, canvas):
 		for i in range(len(self.keywords)):
@@ -176,11 +171,14 @@ class UIManager:
 		self.trialBGCanvas.blit(image_video, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height))
 
 	# runs when new video should be played after word is recognised
-	def updateVideo(self, orderIndex, image):
-		image_videos = self.videos[image]
-		for i in image_videos:
-			self.trialBGCanvas.blit((i, (self.width/2-self.VID_width/2, self.VID_y, self.VID_width, self.VID_height)))
+	def playVideo(self, index):
+		frameArray = self.videos[index]
 
+		for frame in frameArray:
+			pyg.surfarray.blit_array(self.videoCanvas, frame)
+			self.experimentCanvas.blit(self.videoCanvas, self.VID_RECT)
+			pyg.display.flip()
+			
 
 # --- Manager of trial --- #
 class TrialManager:
@@ -190,7 +188,6 @@ class TrialManager:
 		self.progress = 0
 		self.keywords = keywords
 		self.keywordAmount = len(self.keywords)
-
 		self.UIManager = _UImanager
 
 		# --- TRIAL PARAMETERS --- #
@@ -220,7 +217,7 @@ class TrialManager:
 		
 		endTime = time.time()
 		if self.progress == len(self.order):
-			print("Completed trial succesfully")
+			print("Completed trial successfully")
 		else:
 			print("Failed trial")
 
@@ -236,7 +233,8 @@ class TrialManager:
 		return self.progress, (startTime - endTime)
 
 	# store the videos already when the order is known
-	def loadVideos(self,order):
+	def loadVideos(self, order):
+		# TODO use this function
 		print("order is something like this")
 		print(order)
 		for i in self.videos:
@@ -258,11 +256,11 @@ class TrialManager:
 
 		transformedIndex = self.order.index(moveIndex)
 		self.UIManager.markCorrectKeyword(transformedIndex, self.order)
-		self.UIManager.updateVideo(orderIndex = transformedIndex, image = self.keywords[moveIndex])
+
 		# self.UIManager.temporary_video_updater_image(image = self.keywords[moveIndex])
 		self.UIManager.show()
+		self.UIManager.playVideo(moveIndex)
 
 		# Halt until video completes
 		time.sleep(self.UIManager.VID_duration)
-		# self.UIManager.updateVideo(orderIndex = None)
 		self.UIManager.show()
