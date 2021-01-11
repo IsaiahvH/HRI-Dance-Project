@@ -1,6 +1,24 @@
 # HRI-Dance-Project
 Git repository to host code for the final project of Human-Robot Interaction, 2020 Radboud.
 
+This repository contains the folders and files which were necessary to conduct the experiment for the HRI course. The following will eplxain briefly what the folders and files were used for.
+
+### Administration:
+- Consent Letter: the letter the participants read and signed 
+- Information Letter: the letter the participants read before the experiment. Is used to inform them of the experiment and familiarise with what is expected from them. 
+- Trial Structure: First this was used as possible options for trial. The final trial setup is now in the main text and considered alternatives are indicated in bold.
+- Final Movements: The explanation in text of the movements Nao performs in the videos. 
+
+### Experiment:
+
+### Gesture Recognition:
+
+### Motions:
+
+### Sketch:
+
+
+
 ### Folders (Incl. TODOs)
 Here: (delete this line)
 - TODO: Briefly describe the experiment at the top of this README.
@@ -8,7 +26,6 @@ Here: (delete this line)
 
 Administration: Templates for consent and information letters, trial structure and description of the dance moves.
 - TODO: clean up Final_movements.pdf so it actually includes the final movements.
-- TODO: clean up TrialStructure.md so it is clear which options we picked. Or just remove all alternatives.
 - TODO: update readme and remove link to edit the form. Also lock the form somehow. Maybe remove links entirely.
 
 Experiment: OpenSesame file and dependencies, the results of the experiment, their statistical analysis.
