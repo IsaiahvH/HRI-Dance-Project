@@ -19,8 +19,19 @@ This repository contains the folders and files which were necessary to conduct t
 - Questionnaire results.
 
 ### Gesture Recognition:
+- .idea Folder
+- Gesture Examples Folder: pictures of examples of the gestures meant for instructing researchers how to pose for collecting training data.
+- Training Data Folder: Training Data obtained by the researchers.
+- AllPoses.png: Image used in the OpenSesame code to show poses which participants needed to do.
+- GestureRecognizer.py: Code to recognise gestures
+- GestureRecognition.py: Analyses performance of SVM.
+- PoseMarker.py: Recognises the poses.
+- SVM_final.joblib
+- SVM_final_scikit0_22_1.joblib
+- TrainingTest.py
 
 ### Motions:
+- Animations Nao zip file with videos of all the dance moves.
 
 ### Sketch:
 
@@ -30,9 +41,6 @@ This repository contains the folders and files which were necessary to conduct t
 Here: (delete this line)
 - TODO: Briefly describe the experiment at the top of this README.
 - TODO: Remove the ...Improvements.md and keep updating this README until all TODOs are done.
-
-Administration: Templates for consent and information letters, trial structure and description of the dance moves.
-- TODO: update readme and remove link to edit the form. Also lock the form somehow. Maybe remove links entirely.
 
 Experiment: OpenSesame file and dependencies, the results of the experiment, their statistical analysis.
 - TODO: Remove drafts.
