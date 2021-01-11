@@ -3,7 +3,6 @@ Git repository to host code for the final project of Human-Robot Interaction, 20
 
 This repository contains the folders and files which were necessary to conduct the experiment. The following will eplxain briefly what the folders and files were used for.
 ## Folders: 
-- TODO: Remove the ...Improvements.md and keep updating this README until all TODOs are done.
 - TODO: Remove duplicate osexp files.
 
 ### Administration:
