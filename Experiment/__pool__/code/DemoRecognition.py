@@ -42,7 +42,6 @@ class DemoRecognizer:
 		'''
 
 		try:
-
 			with keyboard.Events() as events:
 				event = events.get(timeout)
 				if event is None or event.key == keyboard.Key.esc:
