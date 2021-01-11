@@ -4,12 +4,19 @@ Git repository to host code for the final project of Human-Robot Interaction, 20
 This repository contains the folders and files which were necessary to conduct the experiment for the HRI course. The following will eplxain briefly what the folders and files were used for.
 
 ### Administration:
-- Consent Letter: the letter the participants read and signed 
+- Consent Letter: the letter the participants read and signed.
 - Information Letter: the letter the participants read before the experiment. Is used to inform them of the experiment and familiarise with what is expected from them. 
 - Trial Structure: First this was used as possible options for trial. The final trial setup is now in the main text and considered alternatives are indicated in bold.
 - Final Movements: The explanation in text of the movements Nao performs in the videos. 
 
 ### Experiment:
+- Pool Folder: Folder contains the libraries, images, movies, and models which OpenSesame needed to run the experiment. 
+- Responses Folder: The responses from the OpenSesame experiment are stored here.
+- Experiment instructions.
+- Analysis.ipynb: the Jupyter Notebook file which was used to analyse the data from the questionnaire and experiment. 
+- HRIDanceExperiment.osexp: The OpenSesame file.
+- OpenSesame Instructions.
+- Questionnaire results.
 
 ### Gesture Recognition:
 
@@ -25,7 +32,6 @@ Here: (delete this line)
 - TODO: Remove the ...Improvements.md and keep updating this README until all TODOs are done.
 
 Administration: Templates for consent and information letters, trial structure and description of the dance moves.
-- TODO: clean up Final_movements.pdf so it actually includes the final movements.
 - TODO: update readme and remove link to edit the form. Also lock the form somehow. Maybe remove links entirely.
 
 Experiment: OpenSesame file and dependencies, the results of the experiment, their statistical analysis.
