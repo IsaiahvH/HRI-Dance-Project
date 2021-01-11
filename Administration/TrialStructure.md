@@ -1,5 +1,5 @@
 # Trial Structure Proposal
-Alternative approaches and parameters to be evaluated are indicated in **bold**.
+Alternative approaches and parameters which were evaluated, but not used, are indicated in **bold**.
 
 ## Global overview experiment
 1. Introduction
@@ -27,23 +27,14 @@ A trial has an associated dance move sequence consisting of 4 dance moves, rando
 A dance move instruction is visually communicated by displaying an image of the associated pose, captioned with the associated keyword.
 
 ### Instruction display
+Always display a fixed row of all 6 possible dance instructions. Indicate per trial the currently active instructions by adding their order (e.g. "1", "2", etc.) underneath.\
 **Alternative 1:** Display instructions before the intended execution time, one at a time. This would exclude any memory task involvement.\
-**Alternative 2:** Always display a fixed row of all 6 possible dance instructions. Indicate per trial the currently active instructions by adding their order (e.g. "1", "2", etc.) underneath.\
-**Alternative 3:** Indicate per trial the currently active instructions by displaying them left to right in order.
+**Alternative 2:** Indicate per trial the currently active instructions by displaying them left to right in order.
 
 ### Instruction timing
-General considerations.
-1. Can further instructions be given while the Nao is already performing a dance move?
-1. If so, how many?
-1. Should moves be executed that are not part of the current sequence?
+Perform the instructions with necessary intervals for recognition in between. Whether Nao is listening or watching is indicated with a symbol. While the symbol is displayed Nao listens/ watches until a pose is recognised and will perform this pose immediately and thus stop watching or listening until the pose is finished.
 
-**Alternative 1:** Perform the instructions without necessary intervals for recognition in between.
-This raises the following considerations.
-1. Is the time until recognition measured from the start of the experiment?
-1. Should the Nao remember all these and execute them in the give order after finishing the current dance move?
-1. If the time of recognition is used as main measurement, will this not exclude visual feedback until the Nao reaches this move?
-
-**Alternative 2:** Use a simple melody and instruct participants to give each instruction at the start of a musical sentence, spacing the recognition.
+**Alternative:** Use a simple melody and instruct participants to give each instruction at the start of a musical sentence, spacing the recognition.
 1. Will the Nao's dance moves be equally long? Will the dance moves be longer, shorter, or equal to the time of a musical sentence?
 1. Is the time until recognition measured from the distance to the closest start of the musical sentence?
 
@@ -64,10 +55,4 @@ During the last **10** seconds, an additional message is displayed the next sect
 The break will then end automatically.
 
 ## Questionnaire
-The questionnaire will be conducted on a website, e.g. Google Forms. The participant will be presented with an instruction and a hyperlink to this website.
-
-## Other Considerations
-1. What is the maximum speaking speech at which the keywords can still individually be recognised?
-1. How does this affect the current trial set-up?
-1. How are participant numbers distributed (for odd-even interface balancing)? Can we communicate these?
-1. Does this affect privacy?
+The questionnaire will be conducted on a website Google Forms. The participant will be presented with an instruction and a hyperlink to this website.
