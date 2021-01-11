@@ -1,10 +1,8 @@
 # sketch
-This folder contains shorts scripts that are used for testing purposes
+This folder contains shorts scripts that were used for testing purposes.
 
 ## MediaPipeTest:
 - [Source](https://google.github.io/mediapipe/solutions/pose)
-  - Contains original code, landmark indices
-- Do not use the z-value (depth): model is not trained properly for that.
 - Instructions:
 	- Download the imports (easy through PyCharm)
 	  - If this does not work:
@@ -26,3 +24,8 @@ This folder contains shorts scripts that are used for testing purposes
 - Installation instructions the same as for MediaPipeTest.
 - Example of how to sit (i.e. in the middle, space above head, hips and a bit lower visible):
 <img src="https://github.com/IsaiahvH/HRI-Dance-Project/blob/main/KeypointCollectorExample.jpg" width="350" />
+
+
+## VoiceRecognitionPorcupine:
+- Voice Recogniser used from: https://github.com/Picovoice/porcupine.
+- Use the preprogrammed free words like "Blueberry" or "Hi Alexa" to test if voice recognition with Porcupine works.
