@@ -12,7 +12,7 @@ After following the steps below, take a look through the code and that inside th
 1. When installed open the opensesame file from the experiment folder
 1. Type '!pip install pvporcupine' and '!pip install mediapipe' (if [Errno 13], add '--user') in its console
 1. Try running it with the blue arrows button at the top
-1. It should work now, if not, call/whatsapp me (Lizzy)
+1. It should work now
 
 
 
@@ -30,4 +30,4 @@ After following the steps below, take a look through the code and that inside th
 1. Test if PyAudio works by typing "import pyaudio" into the OpenSesame console 
 1. Try running it with the blue arrows button at the top
 1. If pvporcupine is not installed go to the opensesame console and type !pip install pvporcupine
-1. It should work now, if not, call/whatsapp me (Lizzy)
+1. It should work now
