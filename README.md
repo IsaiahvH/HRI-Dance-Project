@@ -1,5 +1,5 @@
 # HRI-Dance-Project
-Git repository to host code for the final project of Human-Robot Interaction, 2020 Radboud. In this project we research whether vocal or gestural interfaces work better for instructing a robot to do a task, which is a sequence of dance moves. This project uses OpenSesame as an experiment interface and implements voice and pose recognition. 
+Git repository to host code for the final project of Human-Robot Interaction, 2020-2021 Radboud. In this project we research whether vocal or gestural interfaces work better for instructing a robot to do a task, which is a sequence of dance moves. This project uses OpenSesame as an experimental framework and contains an implemention of voice and pose recognition of a fixed set of commands. 
 
 This repository contains the folders and files which were necessary to conduct the experiment. The following will eplxain briefly what the folders and files were used for.
 ## Demo
@@ -13,12 +13,12 @@ A video demonstrating a vocal and gestural trial is available at https://youtu.b
 
 ### Experiment:
 - Pool Folder: Folder contains the libraries, images, movies, and models which OpenSesame needed to run the experiment. 
-- Responses Folder
+- Responses Folder (Data gathered during the experiment. Will be removed at January 1st 2022)
 - Experiment instructions
-- Analysis.ipynb 
-- HRIDanceExperiment.osexp
-- OpenSesame Instructions
-- Questionnaire results
+- Analysis.ipynb (Jupyter Notebook with the explained statistical analyses of all results)
+- HRIDanceExperiment.osexp (OpenSesame file of the experiment)
+- OpenSesame Instructions (For installing OpenSesame)
+- Questionnaire results (Will be removed at January 1st 2022)
 
 ### Gesture Recognition:
 - Gesture Examples Folder
